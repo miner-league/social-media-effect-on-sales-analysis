@@ -1,5 +1,6 @@
 import data_access
 import feature_engineering
+import smoothing
 
 
 class DataAccessObject:
@@ -39,3 +40,6 @@ class DataAccessObject:
 
     def calculate_social_media_score(self):
         self.data['social_media_activity_score'] = feature_engineering.determine_social_media_scores(self.data)
+
+    def calculate_sales_smoothing(self):
+        self.data['sales_with_smoothing'] = smoothing.smooth_transaction_data()
