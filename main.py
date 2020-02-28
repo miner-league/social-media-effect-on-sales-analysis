@@ -14,6 +14,8 @@ def main():
     data_access_object.calculate_sales_smoothing()
     data_access_object.data['sales_with_smoothing'].to_csv('data/sales_with_smoothing.csv', index=False)
 
+    print('combining datasets for dependent variables...')
+    data_access_object.aggregate_and_combine_data()
 
 if __name__ == '__main__':
     main()

@@ -1,7 +1,7 @@
 import data_access
 import feature_engineering
 import smoothing
-
+import aggregate
 
 class DataAccessObject:
 
@@ -27,7 +27,7 @@ class DataAccessObject:
         self.data['sales'] = data_access.get_sales_data()
 
     def get_store_data(self):
-        self.data['store'] = data_access.get_store_data()
+        self.data['stores'] = data_access.get_store_data()
 
     def load_data(self):
         self.get_facebook_social_media_data()
@@ -43,3 +43,14 @@ class DataAccessObject:
 
     def calculate_sales_smoothing(self):
         self.data['sales_with_smoothing'] = smoothing.smooth_transaction_data()
+
+    def combine_sales_with_loyalty(self):
+        self.data['sales_with_loyalty'] = aggregate.combine_sales_with_loyalty(
+            self.data['sales_with_smoothing'],
+            self.data['loyalty'],
+            self.data['stores']
+        )
+        self.data['sales_with_loyalty'].to_csv('data/sales_with_loyalty.csv', index=False)
+
+    def aggregate_and_combine_data(self):
+        self.combine_sales_with_loyalty()
