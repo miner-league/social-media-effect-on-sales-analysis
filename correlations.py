@@ -76,8 +76,9 @@ def correlation_analysis():
 
     # Correlation of Two Time Series - Total transactions on a given date
     i = 1
-    matrixtable = []
-    corrpcttable = []
+    header = ['Stores',1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]
+    matrixtable = [header]
+    corrpcttable = [header]
     matrixrowdf = pd.DataFrame()
     correlationrow = ['All']
     corrpctrow = ['All']
@@ -85,7 +86,8 @@ def correlation_analysis():
         df_smoothed_sales['Date'] += datetime.timedelta(days=i)
         df_smoothed_sales_group = df_smoothed_sales.groupby(['Date'])[["SmoothedTransactionCount"]].sum()
         df = df_activity_score.join(df_smoothed_sales_group, on='Date', how='inner')
-        newrow = find_correlation(i,'All',df, 'Total Impressions', 'SmoothedTransactionCount')
+        newrow = find_correlation(i,'All',df, 'Social Medial Activity Score', 'SmoothedTransactionCount')
+        # newrow = find_correlation(i, 'All', df, 'Total Impressions', 'SmoothedTransactionCount')
         # matrixrowdf = matrixrowdf.append(newrow, ignore_index=True)
         correlationrow.append(newrow['Correlation'])
         corrpctrow.append(newrow['CorrelationPercent'])
@@ -107,7 +109,8 @@ def correlation_analysis():
             df_filtered_sales['Date'] += datetime.timedelta(days=i)
             #df = df_activity_score.join(df_filtered_sales, on='Date', how='inner')
             df = pd.merge(df_filtered_sales, df_activity_score, on='Date', how='inner')
-            newrow = find_correlation(i, storeid, df, 'Total Impressions', 'SmoothedTransactionCount')
+            newrow = find_correlation(i, storeid, df, 'Social Medial Activity Score', 'SmoothedTransactionCount')
+            # newrow = find_correlation(i, storeid, df, 'Total Impressions', 'SmoothedTransactionCount')
             # matrixrowdf = matrixrowdf.append(newrow, ignore_index=True)
             correlationrow.append(newrow['Correlation'])
             corrpctrow.append(newrow['CorrelationPercent'])
