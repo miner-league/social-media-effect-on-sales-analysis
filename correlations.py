@@ -77,8 +77,10 @@ def correlation_analysis():
     # Correlation of Two Time Series - Total transactions on a given date
     i = 1
     matrixtable = []
+    corrpcttable = []
     matrixrowdf = pd.DataFrame()
     correlationrow = ['All']
+    corrpctrow = ['All']
     while i <= 30:
         df_smoothed_sales['Date'] += datetime.timedelta(days=i)
         df_smoothed_sales_group = df_smoothed_sales.groupby(['Date'])[["SmoothedTransactionCount"]].sum()
@@ -86,8 +88,10 @@ def correlation_analysis():
         newrow = find_correlation(i,'All',df, 'Total Impressions', 'SmoothedTransactionCount')
         # matrixrowdf = matrixrowdf.append(newrow, ignore_index=True)
         correlationrow.append(newrow['Correlation'])
+        corrpctrow.append(newrow['CorrelationPercent'])
         i += 1
     matrixtable.append(correlationrow)
+    corrpcttable.append(corrpctrow)
     # Get the unique values of 'B' column
     stores = df_smoothed_sales.StoreId.unique()
     # Using for loop
@@ -98,6 +102,7 @@ def correlation_analysis():
         i = 1
         # matrixrowdf = pd.DataFrame()
         correlationrow = [storeid]
+        corrpctrow = [storeid]
         while i <= 30:
             df_filtered_sales['Date'] += datetime.timedelta(days=i)
             #df = df_activity_score.join(df_filtered_sales, on='Date', how='inner')
@@ -105,12 +110,18 @@ def correlation_analysis():
             newrow = find_correlation(i, storeid, df, 'Total Impressions', 'SmoothedTransactionCount')
             # matrixrowdf = matrixrowdf.append(newrow, ignore_index=True)
             correlationrow.append(newrow['Correlation'])
+            corrpctrow.append(newrow['CorrelationPercent'])
             i += 1
         matrixtable.append(correlationrow)
+        corrpcttable.append(corrpctrow)
     with open("data/correlation_heatmap.csv", "w+") as correlation_heatmap:
         csvWriter = csv.writer(correlation_heatmap, delimiter=',')
         csvWriter.writerows(matrixtable)
-    print('CSV File,correlation_heatmap.csv, for correlation heatmap created')
+    with open("data/correlation_percent_heatmap.csv", "w+") as correlation_percent_heatmap:
+        csvWriter = csv.writer(correlation_percent_heatmap, delimiter=',')
+        csvWriter.writerows(matrixtable)
+    print('CSV File, correlation_heatmap.csv, for correlation heatmap created')
+    print('CSV File, correlation_percent_heatmap, for correlation percent heatmap created')
     # df = df_twitter.join(df_sales_group, on='Date', how='inner')
     # df.Impressions = df['Impressions'].str.replace(',', '')
     # df.Impressions = pd.to_numeric(df['Impressions'])
