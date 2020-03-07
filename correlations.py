@@ -7,6 +7,7 @@ import numpy as np
 import scipy.stats
 from statsmodels.tsa.seasonal import seasonal_decompose
 
+
 def decompose_series(df):
     result = seasonal_decompose(df, model='additive', freq=365)
     result.plot()
@@ -36,6 +37,7 @@ def find_correlation(lag, type, df, col1, col2):
     # plt.scatter(df[col1+'_ret'], df[col2+'_ret'])
     # plt.show()
 
+
 def find_autocorrelation(df, col):
     # Convert the daily data to weekly data
     # df = df.resample(rule='W', convention='end')
@@ -45,6 +47,7 @@ def find_autocorrelation(df, col):
     # Compute and print the autocorrelation of returns
     autocorrelation = df[col+'_ret'].autocorr()
     print("The autocorrelation of weekly returns is %4.2f" % (autocorrelation))
+
 
 # Twitter data with transaction counts irrespective of stores.
 def correlation_analysis():
@@ -140,6 +143,93 @@ def correlation_analysis():
     # find_autocorrelation(df, 'Impressions')
 
 
+def get_row_data(data, level, column_name, ID):
+    store_data = data[data[column_name] == ID]
+    data_without_score = store_data[[
+        'Date',
+        column_name,
+        'SmoothedTransactionCount'
+    ]]
+    data_with_just_score = store_data[[
+        'Date',
+        'Weighted Social Medial Activity Score'
+
+    ]]
+    data_without_score = data_without_score.groupby(['Date', column_name], as_index=False).sum()
+
+    store_data = pd.merge(
+        data_without_score,
+        data_with_just_score,
+        how='left',
+        on='Date'
+    )
+
+    weighted_scores = store_data['Weighted Social Medial Activity Score']
+    smoothed_transactions = store_data['SmoothedTransactionCount']
+
+    row = {'Level': level, 'ID': ID}
+
+    number_of_days = 30
+
+    for offset in range(number_of_days, -1, -1):
+        smoothed_transactions = smoothed_transactions.shift(periods=-1, fill_value=np.nan)
+        smoothed_transactions = smoothed_transactions.dropna()
+        correlation = weighted_scores.corr(smoothed_transactions, method='pearson')
+        row[str(number_of_days - offset)] = correlation
+
+    return row
+
+
+def calculate_social_media_score_sales_correlations():
+    social_media_scores = pd.read_csv('data/social_media_activity_scores.csv')
+    social_media_scores['Date'] = pd.to_datetime(social_media_scores['Date'])
+    sales_with_smoothing = pd.read_csv('data/sales_with_smoothing.csv')
+    sales_with_smoothing['Date'] = pd.to_datetime(sales_with_smoothing['Date'])
+
+    stores = pd.read_excel('data/stores.xlsx')
+
+    combined = pd.merge(
+        sales_with_smoothing,
+        social_media_scores,
+        how='left',
+        on='Date'
+    )
+
+    combined = pd.merge(
+        combined,
+        stores,
+        how='left',
+        on='StoreId'
+    )
+
+    combined = combined.dropna()
+
+    rows = []
+
+    regions = stores['Region'].unique()
+    markets = stores['Market'].unique()
+    states = stores['State'].unique()
+    cities = stores['City'].unique()
+    store_ids = stores['StoreId'].unique()
+
+    for region in regions:
+        rows.append(get_row_data(combined, 'Region', 'Region', region))
+
+    for market in markets:
+        rows.append(get_row_data(combined, 'Market', 'Market', market))
+
+    for state in states:
+        rows.append(get_row_data(combined, 'State', 'State', state))
+
+    for city in cities:
+        rows.append(get_row_data(combined, 'City', 'City', city))
+
+    for store_id in store_ids:
+        rows.append(get_row_data(combined, 'Store', 'StoreId', store_id))
+
+    df = pd.DataFrame(rows)
+
+    df.to_csv('correlations_between_media_and_transactions.csv', index=False)
 
 
 if __name__ == '__main__':

@@ -12,7 +12,7 @@ def get_facebook_social_media_data():
 
 
 def get_twitter_social_media_data():
-    df = pd.read_csv('data/Twitter Profiles-01-01-2018-02-09-2020.csv')
+    df = pd.read_csv('data/twitter_imputed.csv')
     df['Date'] = pd.to_datetime(df['Date'])
     df['Published Posts'] = pd.to_numeric(df['Published Posts'])
     df['Followers'] = df['Followers'].apply(remove_commas)
