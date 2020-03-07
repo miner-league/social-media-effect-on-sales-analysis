@@ -177,26 +177,6 @@ def get_row_data(data, level, column_name, ID):
     return row
 
 
-# def get_row_for_city(data, column, city):
-#     store_data = data[data[column] == city]
-#     store_data = store_data[['Date', 'StoreId', 'Weighted Social Medial Activity Score', 'SmoothedTransactionCount']]
-#
-#     weighted_scores = store_data['Weighted Social Medial Activity Score']
-#     smoothed_transactions = store_data['SmoothedTransactionCount']
-#
-#     row = {'Level': 'City', 'ID': city}
-#
-#     number_of_days = 30
-#
-#     for offset in range(number_of_days, -1, -1):
-#         smoothed_transactions = smoothed_transactions.shift(periods=-1, fill_value=np.nan)
-#         smoothed_transactions = smoothed_transactions.dropna()
-#         correlation = weighted_scores.corr(smoothed_transactions, method='pearson')
-#         row[str(number_of_days - offset)] = correlation
-#
-#     return row
-
-
 def calculate_social_media_score_sales_correlations():
     social_media_scores = pd.read_csv('data/social_media_activity_scores.csv')
     social_media_scores['Date'] = pd.to_datetime(social_media_scores['Date'])
