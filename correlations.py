@@ -4,10 +4,12 @@ import numpy as np
 import scipy.stats
 from statsmodels.tsa.seasonal import seasonal_decompose
 
+
 def decompose_series(df):
     result = seasonal_decompose(df, model='additive', freq=365)
     result.plot()
     plt.show()
+
 
 def find_correlation(df, col1, col2):
     # Compute percent change using pct_change()
@@ -24,6 +26,7 @@ def find_correlation(df, col1, col2):
     # plt.scatter(df[col1+'_ret'], df[col2+'_ret'])
     # plt.show()
 
+
 def find_autocorrelation(df, col):
     # Convert the daily data to weekly data
     # df = df.resample(rule='W', convention='end')
@@ -33,6 +36,7 @@ def find_autocorrelation(df, col):
     # Compute and print the autocorrelation of returns
     autocorrelation = df[col+'_ret'].autocorr()
     print("The autocorrelation of weekly returns is %4.2f" % (autocorrelation))
+
 
 # Twitter data with transaction counts irrespective of stores.
 def twitter_analysis():
@@ -65,8 +69,6 @@ def twitter_analysis():
     # find_correlation(df, 'Impressions', 'TransactionCount');
     # find_correlation(df, 'Published Posts', 'Impressions');
     # find_autocorrelation(df, 'Impressions')
-
-
 
 
 if __name__ == '__main__':
