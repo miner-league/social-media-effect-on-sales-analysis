@@ -26,7 +26,7 @@ def get_twitter_social_media_data():
     df['Engagement Rate (per Impression)'] = pd.to_numeric(df['Engagement Rate (per Impression)'])
     return df
 
-def main():
+def impute_missing_twitter_data():
     twitter_data = get_twitter_social_media_data()
     twitter_data['Followers'].interpolate(method='linear', inplace=True, limit_direction="both")
     twitter_data['Followers'] = twitter_data['Followers'].round()
@@ -39,4 +39,4 @@ def main():
     twitter_data.to_csv('data/twitter_imputed.csv', index=False)
 
 if __name__ == '__main__':
-    main()
+    impute_missing_twitter_data()
