@@ -26,7 +26,15 @@ def get_facebook_score(row):
     # Multiply by number of Total Fans to 'weight' the count
     number_of_fans = row['Total Fans'].values[0]
 
-    return post_count, post_count * number_of_fans
+    engagement = row['Engagements'].values[0]
+    awareness = row['Impressions'].values[0] + row['Reach'].values[0]
+
+    return {
+        'raw': post_count,
+        'weighted': post_count * number_of_fans,
+        'engagement': engagement,
+        'awareness': awareness
+    }
 
 
 def get_twitter_score(row):
@@ -36,7 +44,15 @@ def get_twitter_score(row):
     # Multiply by number of followers to 'weight' the count
     number_of_followers = row['Followers'].values[0]
 
-    return post_count, post_count * number_of_followers
+    engagement = row['Engagements'].values[0]
+    awareness = row['Impressions'].values[0]
+
+    return {
+        'raw': post_count,
+        'weighted': post_count * number_of_followers,
+        'engagement': engagement,
+        'awareness': awareness
+    }
 
 
 def get_instagram_score(row):
@@ -46,7 +62,15 @@ def get_instagram_score(row):
     # Multiply by number of followers to 'weight' the count
     number_of_followers = row['Followers'].values[0]
 
-    return post_count, post_count * number_of_followers
+    engagement = row['Engagements'].values[0]
+    awareness = row['Impressions'].values[0] + row['Reach'].values[0]
+
+    return {
+        'raw': post_count,
+        'weighted': post_count * number_of_followers,
+        'engagement': engagement,
+        'awareness': awareness
+    }
 
 
 def get_relevant_row(data, dt, media_type):
@@ -58,26 +82,37 @@ def get_relevant_row(data, dt, media_type):
 def get_scores(dates, data):
     raw_scores = []
     weighted_scores = []
+    engagement_scores = []
+    awareness = []
     for dt in dates:
-        raw_facebook_score, weighted_facebook_score = get_facebook_score(get_relevant_row(data, dt, 'facebook_social_media'))
-        raw_twitter_score, weighted_twitter_score = get_twitter_score(get_relevant_row(data, dt, 'twitter_social_media'))
-        raw_instagram_score, weighted_instagram_score = get_instagram_score(get_relevant_row(data, dt, 'instagram_social_media'))
+        facebook_scores = get_facebook_score(get_relevant_row(data, dt, 'facebook_social_media'))
+        twitter_scores = get_twitter_score(get_relevant_row(data, dt, 'twitter_social_media'))
+        instagram_scores = get_instagram_score(get_relevant_row(data, dt, 'instagram_social_media'))
 
-        raw_score = raw_facebook_score + raw_twitter_score + raw_instagram_score
-        raw_scores.append(raw_score)
+        raw_scores.append(facebook_scores['raw'] + twitter_scores['raw'] + instagram_scores['raw'])
 
-        weighted_score = weighted_facebook_score + weighted_twitter_score + weighted_instagram_score
-        weighted_scores.append(weighted_score)
+        weighted_scores.append(facebook_scores['weighted'] + twitter_scores['weighted'] + instagram_scores['weighted'])
 
-    return raw_scores, weighted_scores
+        engagement_scores.append(facebook_scores['engagement'] + twitter_scores['engagement'] + instagram_scores['engagement'])
+
+        awareness.append(facebook_scores['awareness'] + twitter_scores['awareness'] + instagram_scores['awareness'])
+
+    return {
+        'raw_scores': raw_scores,
+        'weighted_scores': weighted_scores,
+        'engagement_scores': engagement_scores,
+        'awareness': awareness
+    }
 
 
 def determine_social_media_scores(data):
     dates = get_dates()
-    raw_scores, weighted_scores = get_scores(dates, data)
+    scores = get_scores(dates, data)
 
     return pd.DataFrame({
         'Date': dates,
-        'Social Medial Activity Score': raw_scores,
-        'Weighted Social Medial Activity Score': weighted_scores
+        'Social Medial Activity Score': scores['raw_scores'],
+        'Weighted Social Medial Activity Score': scores['weighted_scores'],
+        'Engagement Scores': scores['engagement_scores'],
+        'Awareness': scores['awareness']
     })

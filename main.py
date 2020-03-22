@@ -22,7 +22,7 @@ def main():
 
     print('combining datasets for dependent variables...')
     data_access_object.aggregate_and_combine_data()
-
+    #
     print('calculating correlations for social media score and sales by store')
     calculate_social_media_score_sales_correlations()
 

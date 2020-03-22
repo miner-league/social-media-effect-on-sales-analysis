@@ -143,7 +143,7 @@ def correlation_analysis():
     # find_autocorrelation(df, 'Impressions')
 
 
-def get_row_data(data, level, column_name, ID):
+def get_row_data(data, level, column_name, ID, target_social_media_score):
     store_data = data[data[column_name] == ID]
     data_without_score = store_data[[
         'Date',
@@ -152,7 +152,7 @@ def get_row_data(data, level, column_name, ID):
     ]]
     data_with_just_score = store_data[[
         'Date',
-        'Weighted Social Medial Activity Score'
+        target_social_media_score
 
     ]]
     data_without_score = data_without_score.groupby(['Date', column_name], as_index=False).sum()
@@ -164,7 +164,7 @@ def get_row_data(data, level, column_name, ID):
         on='Date'
     )
 
-    weighted_scores = store_data['Weighted Social Medial Activity Score']
+    weighted_scores = store_data[target_social_media_score]
     smoothed_transactions = store_data['SmoothedTransactionCount']
 
     row = {'Level': level, 'ID': ID}
@@ -178,6 +178,35 @@ def get_row_data(data, level, column_name, ID):
         row[str(number_of_days - offset)] = correlation
 
     return row
+
+
+def determine_and_write_correlations(stores, combined, target_name, target_value):
+    rows = []
+
+    regions = stores['Region'].unique()
+    markets = stores['Market'].unique()
+    states = stores['State'].unique()
+    cities = stores['City'].unique()
+    store_ids = stores['StoreId'].unique()
+
+    for region in regions:
+        rows.append(get_row_data(combined, 'Region', 'Region', region, target_value))
+
+    for market in markets:
+        rows.append(get_row_data(combined, 'Market', 'Market', market, target_value))
+
+    for state in states:
+        rows.append(get_row_data(combined, 'State', 'State', state, target_value))
+
+    for city in cities:
+        rows.append(get_row_data(combined, 'City', 'City', city, target_value))
+
+    for store_id in store_ids:
+        rows.append(get_row_data(combined, 'Store', 'StoreId', store_id, target_value))
+
+    df = pd.DataFrame(rows)
+
+    df.to_csv('correlations_between_media({})_and_transactions.csv'.format(target_name), index=False)
 
 
 def calculate_social_media_score_sales_correlations():
@@ -204,32 +233,16 @@ def calculate_social_media_score_sales_correlations():
 
     combined = combined.dropna()
 
-    rows = []
+    target_list = {
+        'Posts': 'Social Medial Activity Score',
+        'Weighted Posts': 'Weighted Social Medial Activity Score',
+        'Engagement Scores': 'Engagement Scores',
+        'Awareness': 'Awareness'
+    }
 
-    regions = stores['Region'].unique()
-    markets = stores['Market'].unique()
-    states = stores['State'].unique()
-    cities = stores['City'].unique()
-    store_ids = stores['StoreId'].unique()
+    for target_name, target_value in target_list.items():
+        determine_and_write_correlations(stores, combined, target_name, target_value)
 
-    for region in regions:
-        rows.append(get_row_data(combined, 'Region', 'Region', region))
-
-    for market in markets:
-        rows.append(get_row_data(combined, 'Market', 'Market', market))
-
-    for state in states:
-        rows.append(get_row_data(combined, 'State', 'State', state))
-
-    for city in cities:
-        rows.append(get_row_data(combined, 'City', 'City', city))
-
-    for store_id in store_ids:
-        rows.append(get_row_data(combined, 'Store', 'StoreId', store_id))
-
-    df = pd.DataFrame(rows)
-
-    df.to_csv('correlations_between_media_and_transactions.csv', index=False)
 
 
 if __name__ == '__main__':
