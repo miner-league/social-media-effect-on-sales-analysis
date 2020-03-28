@@ -1,4 +1,5 @@
-from correlations import calculate_social_media_score_sales_correlations
+from correlations import calculate_social_media_score_sales_correlations, \
+    calculate_social_media_score_loyalty_correlations
 from data_access_object import DataAccessObject
 from twitter_data_imputation import impute_missing_twitter_data
 
@@ -25,6 +26,9 @@ def main():
     #
     print('calculating correlations for social media score and sales by store')
     calculate_social_media_score_sales_correlations()
+
+    print('calculating correlations for social media score and loyalty')
+    calculate_social_media_score_loyalty_correlations()
 
 if __name__ == '__main__':
     main()

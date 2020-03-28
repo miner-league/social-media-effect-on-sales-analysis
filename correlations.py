@@ -180,7 +180,7 @@ def get_row_data(data, level, column_name, ID, target_social_media_score):
     return row
 
 
-def determine_and_write_correlations(stores, combined, target_name, target_value):
+def determine_and_write_sales_correlations(stores, combined, target_name, target_value):
     rows = []
 
     regions = stores['Region'].unique()
@@ -206,7 +206,37 @@ def determine_and_write_correlations(stores, combined, target_name, target_value
 
     df = pd.DataFrame(rows)
 
-    df.to_csv('correlations_between_media({})_and_transactions.csv'.format(target_name), index=False)
+    df.to_csv('output/correlations_between_media({})_and_transactions.csv'.format(target_name), index=False)
+
+
+def determine_and_write_loyalty_correlations(combined, target_name, target_value):
+    rows = []
+
+    number_of_weeks = 4
+
+    states = combined['State'].unique()
+
+    for state in states:
+
+        row = {'State': state}
+
+        data_for_specific_state = combined[combined['State'] == state]
+
+        media_scores = data_for_specific_state[target_value]
+        target_values = data_for_specific_state['NewRegistrations']
+
+        for offset in range(number_of_weeks, -1, -1):
+            target_values = target_values.shift(periods=-1, fill_value=np.nan)
+            target_values = target_values.dropna()
+            correlation = media_scores.corr(target_values, method='pearson')
+            row[str(number_of_weeks - offset)] = correlation
+
+        rows.append(row)
+
+    df = pd.DataFrame(rows)
+
+    df.to_csv('output/correlations_between_media({})_and_loyalty.csv'.format(target_name), index=False)
+
 
 
 def calculate_social_media_score_sales_correlations():
@@ -241,8 +271,44 @@ def calculate_social_media_score_sales_correlations():
     }
 
     for target_name, target_value in target_list.items():
-        determine_and_write_correlations(stores, combined, target_name, target_value)
+        determine_and_write_sales_correlations(stores, combined, target_name, target_value)
 
+
+def calculate_social_media_score_loyalty_correlations():
+    social_media_scores = pd.read_csv('data/social_media_activity_scores.csv')
+    social_media_scores['Date'] = pd.to_datetime(social_media_scores['Date'])
+    social_media_scores['week'] = social_media_scores['Date'].dt.week
+    social_media_scores['year'] = social_media_scores['Date'].dt.year
+    social_media_scores = social_media_scores.drop(columns=['Date'])
+    social_media_scores_aggregated = social_media_scores.groupby(['year', 'week'], as_index=False).sum()
+
+    loyalty_scores = pd.read_excel('data/loyalty.xlsx')
+    loyalty_scores['Date'] = pd.to_datetime(loyalty_scores['CalendarWeekEndingDate'])
+    loyalty_scores['week'] = loyalty_scores['Date'].dt.week
+    loyalty_scores['year'] = loyalty_scores['Date'].dt.year
+    loyalty_scores = loyalty_scores.drop(columns=['Date', 'CalendarWeekEndingDate'])
+    loyalty_scores_aggregated = loyalty_scores.groupby(['year', 'week', 'State'], as_index=False).sum()
+
+    combined = pd.merge(
+        social_media_scores_aggregated,
+        loyalty_scores_aggregated,
+        how='inner',
+        on=['year', 'week']
+    )
+
+    combined = combined.dropna()
+
+    target_list = {
+        'Posts': 'Social Medial Activity Score',
+        'Weighted Posts': 'Weighted Social Medial Activity Score',
+        'Engagement Scores': 'Engagement Scores',
+        'Awareness': 'Awareness'
+    }
+
+    for target_name, target_value in target_list.items():
+        determine_and_write_loyalty_correlations(combined, target_name, target_value)
+
+    print(combined)
 
 
 if __name__ == '__main__':
