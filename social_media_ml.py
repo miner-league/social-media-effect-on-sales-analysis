@@ -482,14 +482,15 @@ def generate_mlfit_loyalty1():
     i = 1
     header = ['State', 'rsquared_adj', 'RMSE']
     matrixtable = [header]
-    rows = ['All']
     tfi_loyalty = pd.merge(
         tfi_aggregated,
         loyalty_scores_aggregated,
         how='inner',
         on=['year', 'week']
     )
-
+    min = tfi_loyalty['NewRegistrations'].min()
+    max = tfi_loyalty['NewRegistrations'].max()
+    rows = ['All: '+str(min)+' - '+str(max)]
     matrixtable = addMatrixTableRow(x_columns, matrixtable, rows, tfi_loyalty, tfi_loyalty['NewRegistrations'])
 
     states = loyalty_scores_aggregated['State'].unique()
@@ -561,8 +562,10 @@ def generate_mlfit_sales():
         how='inner',
         on=['year', 'month']
     )
+    min=all_store_sales['SmoothedTransactionCount'].min()
+    max = all_store_sales['SmoothedTransactionCount'].max()
     all_store_sales = all_store_sales.groupby(['year', 'month'], as_index=False).sum()
-    matrixtable_store = addMatrixTableRow(x_columns, matrixtable_store, ['All'], all_store_sales,
+    matrixtable_store = addMatrixTableRow(x_columns, matrixtable_store, ['All: '+str(min)+' - '+str(max)], all_store_sales,
                                           all_store_sales['SmoothedTransactionCount'])
     stores = sales_df_store['StoreId'].unique()
     for storeId in stores:
@@ -590,8 +593,10 @@ def generate_mlfit_sales():
         how='inner',
         on=['year', 'month']
     )
+    min = all_city_sales['SmoothedTransactionCount'].min()
+    max = all_city_sales['SmoothedTransactionCount'].max()
     all_city_sales = all_city_sales.groupby(['year', 'month'], as_index=False).sum()
-    matrixtable_city = addMatrixTableRow(x_columns, matrixtable_city, ['All'], all_city_sales,
+    matrixtable_city = addMatrixTableRow(x_columns, matrixtable_city, ['All: '+str(min)+' - '+str(max)], all_city_sales,
                                          all_city_sales['SmoothedTransactionCount'])
     cities = sales_df_city['City'].unique()
     for city in cities:
@@ -619,8 +624,10 @@ def generate_mlfit_sales():
         how='inner',
         on=['year', 'month']
     )
+    min = all_state_sales['SmoothedTransactionCount'].min()
+    max = all_state_sales['SmoothedTransactionCount'].max()
     all_state_sales = all_state_sales.groupby(['year', 'month'], as_index=False).sum()
-    matrixtable_state = addMatrixTableRow(x_columns, matrixtable_state, ['All'], all_state_sales,
+    matrixtable_state = addMatrixTableRow(x_columns, matrixtable_state, ['All: '+str(min)+' - '+str(max)], all_state_sales,
                                           all_state_sales['SmoothedTransactionCount'])
     states = sales_df_state['State'].unique()
     for state in states:
@@ -647,7 +654,9 @@ def generate_mlfit_sales():
         how='inner',
         on=['year', 'month']
     )
-    matrixtable_region = addMatrixTableRow(x_columns, matrixtable_region, ['All'], all_region_sales,
+    min = all_region_sales['SmoothedTransactionCount'].min()
+    max = all_region_sales['SmoothedTransactionCount'].max()
+    matrixtable_region = addMatrixTableRow(x_columns, matrixtable_region, ['All: '+str(min)+' - '+str(max)], all_region_sales,
                                            all_region_sales['SmoothedTransactionCount'])
     regions = sales_df_region['Region'].unique()
     for region in regions:
