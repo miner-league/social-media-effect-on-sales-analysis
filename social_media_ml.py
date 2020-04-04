@@ -836,10 +836,114 @@ def pca_process_xy(x, y):
     # show scatter plot
     plt.show()
 
+def generate_mlfit_nps():
+    x_columns = ['ActivityScore', 'WeightedActivityScore', 'TotalImpressions']
+    scores_df = pd.read_csv('data/social_media_activity_scores.csv')
+    scores_df['Date'] = pd.to_datetime(scores_df['Date'])
+    scores_df['ActivityScore'] = scores_df['Social Medial Activity Score'].apply(remove_commas)
+    scores_df['ActivityScore'] = pd.to_numeric(scores_df['ActivityScore'])
+    scores_df['WeightedActivityScore'] = scores_df['Weighted Social Medial Activity Score'].apply(remove_commas)
+    scores_df['WeightedActivityScore'] = pd.to_numeric(scores_df['WeightedActivityScore'])
+    scores_df['TotalImpressions'] = scores_df['Total Impressions'].apply(remove_commas)
+    scores_df['TotalImpressions'] = pd.to_numeric(scores_df['TotalImpressions'])
+    tfi = scores_df[['Date', 'ActivityScore', 'WeightedActivityScore', 'TotalImpressions']]
+    tfi['Month'] = tfi['Date'].dt.month
+    tfi['Year'] = tfi['Date'].dt.year
+    tfi = tfi.drop(columns=['Date'])
+    tfi_aggregated = tfi.groupby(['Year', 'Month'], as_index=False).sum()
+
+    nps_scores = pd.read_excel('data/nps.xlsx')
+    nps_scores_aggregated = nps_scores.groupby(['Year', 'Month','StoreId'], as_index=False).sum()
+    header = ['Store', 'rsquared_adj', 'RMSE']
+    matrixtable = [header]
+    tfi_nps = pd.merge(
+        tfi_aggregated,
+        nps_scores_aggregated,
+        on=['Year', 'Month']
+    )
+    tfi_nps = tfi_nps.dropna()
+    min = tfi_nps['NPSScore'].min()
+    max = tfi_nps['NPSScore'].max()
+    rows = ['All: '+str(min)+' - '+str(max)]
+    X = tfi_nps[x_columns]
+    X = replace_missing_value(X, X.columns)
+    Y = tfi_nps['NPSScore']
+    X = sm.add_constant(X)
+    model = sm.OLS(Y, X).fit()
+    pred_p_values = model.pvalues[model.pvalues < 0.05]
+    pred_x_columns = pred_p_values.keys().tolist()
+    if 'const' in pred_x_columns:
+        pred_x_columns.remove('const')
+
+    # Model with predominant features
+    rsquared_adj = 0
+    if len(pred_x_columns) >= 1:
+        X2 = tfi_nps[pred_x_columns]
+        X2 = replace_missing_value(X2, X2.columns)
+        # Split data
+        X_train, X_test, y_train, y_test = train_test_split(X2, Y, random_state=1)
+        regressor2 = LinearRegression()
+        regressor2.fit(X_train, y_train)
+        X_train2 = sm.add_constant(X_train)
+        model2 = sm.OLS(y_train, X_train2).fit()
+        rsquared_adj = model2.rsquared_adj
+        # Predict
+        y_pred = regressor2.predict(X_test)
+        # RMSE
+        rmse = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
+        rows.append(rsquared_adj)
+        rows.append(rmse)
+    matrixtable.append(rows)
+    stores = nps_scores.StoreId.unique()
+    for store in stores:
+        nps_scores_aggregated_store = nps_scores_aggregated[nps_scores_aggregated['StoreId'] == store]
+        if len(nps_scores_aggregated_store) >= 1:
+            tfi_nps_store = pd.merge(
+                tfi_aggregated,
+                nps_scores_aggregated_store,
+                on=['Year', 'Month']
+            )
+            rows = [store]
+            X = tfi_nps_store[x_columns]
+            X = replace_missing_value(X, X.columns)
+            Y = tfi_nps_store['NPSScore']
+            regressor = LinearRegression()
+            regressor.fit(X, Y)
+            X = sm.add_constant(X)
+            model = sm.OLS(Y, X).fit()
+            pred_p_values = model.pvalues[model.pvalues < 0.05]
+            pred_x_columns = pred_p_values.keys().tolist()
+            if 'const' in pred_x_columns:
+                pred_x_columns.remove('const')
+
+            # Model with predominant features
+            rsquared_adj = 0
+            if len(pred_x_columns) >= 1:
+                X2 = tfi_nps_store[pred_x_columns]
+                X2 = replace_missing_value(X2, X2.columns)
+                # Split data
+                X_train, X_test, y_train, y_test = train_test_split(X2, Y, random_state=1)
+                regressor2 = LinearRegression()
+                regressor2.fit(X_train, y_train)
+                X_train2 = sm.add_constant(X_train)
+                model2 = sm.OLS(y_train, X_train2).fit()
+                rsquared_adj = model2.rsquared_adj
+                # Predict
+                y_pred = regressor2.predict(X_test)
+                # RMSE
+                rmse = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
+                rows.append(rsquared_adj)
+                rows.append(rmse)
+            matrixtable.append(rows)
+
+    with open("data/generate_mlfit_nps.csv", "w+") as generate_mlfit_nps:
+        csvWriter = csv.writer(generate_mlfit_nps, delimiter=',')
+        csvWriter.writerows(matrixtable)
 
 if __name__ == '__main__':
     # generate_heatmap_transactions()
     # generate_mlfit_loyalty()
     # generate_mlfit_loyalty1()
     # generate_mlfit_sales()
-    pca_analysis()
+    # pca_analysis()
+    generate_mlfit_nps()
