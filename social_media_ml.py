@@ -331,7 +331,7 @@ def generate_mlfit_loyalty():
     loyalty_scores = loyalty_scores.drop(columns=['Date', 'CalendarWeekEndingDate'])
     loyalty_scores_aggregated = loyalty_scores.groupby(['year', 'week', 'State'], as_index=False).sum()
     i = 1
-    header = ['State', 'rsquared_adj', 'RMSE']
+    header = ['State', 'rsquared_adj', 'RMSE', 'Significant Features']
     matrixtable = [header]
     rows = ['All']
     tfi_loyalty = pd.merge(
@@ -371,6 +371,7 @@ def generate_mlfit_loyalty():
         rmse = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
         rows.append(rsquared_adj)
         rows.append(rmse)
+        rows.append(pred_x_columns)
     matrixtable.append(rows)
 
     states = loyalty_scores_aggregated['State'].unique()
@@ -415,6 +416,7 @@ def generate_mlfit_loyalty():
                 rmse = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
                 rows.append(rsquared_adj)
                 rows.append(rmse)
+                rows.append(pred_x_columns)
             matrixtable.append(rows)
 
     with open("data/generate_mlfit_loyalty.csv", "w+") as generate_mlfit_loyalty:
@@ -854,7 +856,7 @@ def generate_mlfit_nps():
 
     nps_scores = pd.read_excel('data/nps.xlsx')
     nps_scores_aggregated = nps_scores.groupby(['Year', 'Month','StoreId'], as_index=False).sum()
-    header = ['Store', 'rsquared_adj', 'RMSE']
+    header = ['Store', 'rsquared_adj', 'RMSE','Significant Features']
     matrixtable = [header]
     tfi_nps = pd.merge(
         tfi_aggregated,
@@ -893,6 +895,7 @@ def generate_mlfit_nps():
         rmse = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
         rows.append(rsquared_adj)
         rows.append(rmse)
+        rows.append(pred_x_columns)
     matrixtable.append(rows)
     stores = nps_scores.StoreId.unique()
     for store in stores:
@@ -934,6 +937,7 @@ def generate_mlfit_nps():
                 rmse = np.sqrt(metrics.mean_squared_error(y_test, y_pred))
                 rows.append(rsquared_adj)
                 rows.append(rmse)
+                rows.append(pred_x_columns)
             matrixtable.append(rows)
 
     with open("data/generate_mlfit_nps.csv", "w+") as generate_mlfit_nps:
@@ -942,8 +946,8 @@ def generate_mlfit_nps():
 
 if __name__ == '__main__':
     # generate_heatmap_transactions()
-    # generate_mlfit_loyalty()
+    generate_mlfit_loyalty()
     # generate_mlfit_loyalty1()
     # generate_mlfit_sales()
     # pca_analysis()
-    generate_mlfit_nps()
+    # generate_mlfit_nps()
